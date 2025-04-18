@@ -2,7 +2,14 @@
 
 ## Description
 
-A brief description of the plugin including a screenshot and/or a short video.
+A custom BigBlueButton plugin that adds a "Start Stream" button to the session's action dropdown menu.
+This plugin provides an intuitive way for moderators to initiate a live stream directly from within an active BigBlueButton conference — streamlining the process and enhancing the user experience during virtual meetings, webinars, and presentations.
+
+🔥 Features
+
+  - "Seamlessly integrates into BigBlueButton’s action dropdown."
+  - "Enables moderators to start streaming with a single click. (e.g: Twitch, Youtube, ...)"
+  - "Designed to improve workflow for online classes, virtual events, live broadcasts, and streaming to a large audience."
 
 ## Building the Plugin
 
