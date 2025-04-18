@@ -1,5 +1,6 @@
 {
-  "name": "<plugin-name>",
+  "name": "sample-stream-button-plugin",
+  "description": "Sample Stream Button Plugin for BigBlueButton",
   "version": "0.1.0",
   "private": true,
   "main": "./src/index.tsx",
