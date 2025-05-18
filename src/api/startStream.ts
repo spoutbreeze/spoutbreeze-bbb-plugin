@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_URL } from '../../config'
 
 export interface BroadcasterReq {
     meeting_id: string;
@@ -10,7 +11,7 @@ export interface BroadcasterReq {
 export const startStream = async (payload: BroadcasterReq
 ) => {
     try {
-        const response = await axios.post('http://127.0.0.1:8000/api/bbb/broadcaster', payload);
+        const response = await axios.post(`${API_URL}/api/bbb/broadcaster`, payload);
         if (response.status === 200) {
             console.log("Stream started successfully:", response.data);
             return response.data;
