@@ -77,3 +77,18 @@
   bottom: 0;
   background-color: rgba(6, 23, 42, 0.75);
 }
+
+select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Optional: Style for loading indicators */
+.loading-indicator {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}

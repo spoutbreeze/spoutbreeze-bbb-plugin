@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { SampleStreamButtonPluginItemProps } from "./types";
 import { startStream } from "./../../api/startStream";
 import { useTwitchChat } from "./useTwitchChat";
+import { fetchStreamEndpoints, StreamEndpointsRes } from "./../../api/streamEndpoints";
 import "./style.css";
 
 // Parse a single message in the format `:username!username@username.tmi.twitch.tv PRIVMSG #channel :message`
@@ -39,10 +40,11 @@ function SampleStreamButtonPluginItem({
   const pluginApi: PluginApi = BbbPluginSdk.getPluginApi(uuid);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [meetingId, setMeetingId] = useState<string>("");
-  const [rtmpUrl, setRtmpUrl] = useState<string>("");
-  const [streamKey, setStreamKey] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("");
+  const [streamEndpoints, setStreamEndpoints] = useState<StreamEndpointsRes[]>([]);
+  const [selectedEndpointId, setSelectedEndpointId] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const [processedMessages, setProcessedMessages] = useState<string[]>([]);
   const [lastProcessedMessageIds, setLastProcessedMessageIds] = useState<
@@ -56,6 +58,7 @@ function SampleStreamButtonPluginItem({
 
   const handleStartStreamButtonClick = () => {
     setShowModal(true);
+    loadStreamEndpoints();
     pluginLogger.info("Start Stream button clicked");
   };
 
@@ -63,13 +66,42 @@ function SampleStreamButtonPluginItem({
     setShowModal(false);
   };
 
+  const loadStreamEndpoints = async () => {
+    setIsLoading(true);
+    try {
+      const endpoints = await fetchStreamEndpoints();
+      setStreamEndpoints(endpoints);
+      if (endpoints.length > 0) {
+        setSelectedEndpointId(endpoints[0].id);
+      }
+      setIsLoading(false);
+    } catch (error) {
+      setStatusMessage("Error loading stream endpoints");
+      pluginLogger.error("Error loading stream endpoints:", error);
+      console.error("Error loading stream endpoints:", error);
+    }
+  };
+
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!selectedEndpointId) {
+      setStatusMessage("Please select a stream endpoint");
+      return;
+    }
+    const selectedEndpoint = streamEndpoints.find(
+      (endpoint) => endpoint.id === selectedEndpointId
+    );
+
+    if (!selectedEndpoint) {
+      setStatusMessage("Invalid stream endpoint selected");
+      return;
+    }
+
     try {
       const payload = {
         meeting_id: meetingId,
-        rtmp_url: rtmpUrl,
-        stream_key: streamKey,
+        rtmp_url: selectedEndpoint.rtmp_url,
+        stream_key: selectedEndpoint.stream_key,
         password: password,
       };
       await startStream(payload);
@@ -239,45 +271,46 @@ function SampleStreamButtonPluginItem({
     >
       <div>
         <h2>Start Stream</h2>
-        <form onSubmit={handleFormSubmit}>
-          <div>
-            <label>Meeting ID:</label>
-            <input
-              type="text"
-              value={meetingId}
-              onChange={(e) => setMeetingId(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label>RTMP URL:</label>
-            <input
-              type="text"
-              value={rtmpUrl}
-              onChange={(e) => setRtmpUrl(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label>Stream Key:</label>
-            <input
-              type="text"
-              value={streamKey}
-              onChange={(e) => setStreamKey(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label>Password:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit">Start Stream</button>
-        </form>
+        {isLoading ? (
+          <p>Loading stream destinations...</p>
+        ) : (
+          <form onSubmit={handleFormSubmit}>
+            <div>
+              <label>Meeting ID:</label>
+              <input
+                type="text"
+                value={meetingId}
+                onChange={(e) => setMeetingId(e.target.value)}
+                required
+              />
+            </div>
+            <div>
+              <label>Stream Destination:</label>
+              <select
+                value={selectedEndpointId}
+                onChange={(e) => setSelectedEndpointId(e.target.value)}
+                required
+              >
+                <option value="">Select a destination</option>
+                {streamEndpoints.map(endpoint => (
+                  <option key={endpoint.id} value={endpoint.id}>
+                    {endpoint.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label>Password:</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit">Start Stream</button>
+          </form>
+        )}
         {statusMessage && <p>{statusMessage}</p>}
         <button onClick={handleCloseModal}>Close</button>
       </div>
