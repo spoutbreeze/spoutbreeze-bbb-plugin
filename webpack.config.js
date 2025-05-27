@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 const path = require('path');
 
 module.exports = {
@@ -55,6 +56,11 @@ module.exports = {
     extensions: ['.js', '.jsx', '.tsx', '.ts'],
   },
   plugins: [
+    new Dotenv({
+      path: './.env', // Path to .env file
+      safe: false, // Set to true if you have a .env.example file
+      systemvars: true, // Load system environment variables as well
+    }),
     new CopyWebpackPlugin({
       patterns: [
         { from: 'manifest.json', to: './' }, // Copy manifest.json to static/ in the output folder

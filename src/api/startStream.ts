@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { API_URL } from '../../config'
 
 export interface BroadcasterReq {
     meeting_id: string;
@@ -7,6 +6,8 @@ export interface BroadcasterReq {
     stream_key: string;
     password: string;
 }
+
+const API_URL = process.env.API_URL;
 
 export const startStream = async (payload: BroadcasterReq
 ) => {

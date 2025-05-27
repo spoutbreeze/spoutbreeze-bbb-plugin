@@ -4,6 +4,9 @@ import {
   ActionButtonDropdownSeparator,
   ActionButtonDropdownOption,
   pluginLogger,
+  NavBarButton,
+  NavBarInfo,
+  NavBarItemPosition,
 } from "bigbluebutton-html-plugin-sdk";
 import * as React from "react";
 import * as ReactModal from "react-modal";
@@ -11,7 +14,10 @@ import { useEffect, useState } from "react";
 import { SampleStreamButtonPluginItemProps } from "./types";
 import { startStream } from "./../../api/startStream";
 import { useTwitchChat } from "./useTwitchChat";
-import { fetchStreamEndpoints, StreamEndpointsRes } from "./../../api/streamEndpoints";
+import {
+  fetchStreamEndpoints,
+  StreamEndpointsRes,
+} from "./../../api/streamEndpoints";
 import "./style.css";
 
 // Parse a single message in the format `:username!username@username.tmi.twitch.tv PRIVMSG #channel :message`
@@ -38,11 +44,14 @@ function SampleStreamButtonPluginItem({
 }: SampleStreamButtonPluginItemProps): React.ReactElement {
   BbbPluginSdk.initialize(uuid);
   const pluginApi: PluginApi = BbbPluginSdk.getPluginApi(uuid);
+  const { data: currentUser } = pluginApi.useCurrentUser();
   const [showModal, setShowModal] = useState<boolean>(false);
   const [meetingId, setMeetingId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [statusMessage, setStatusMessage] = useState<string>("");
-  const [streamEndpoints, setStreamEndpoints] = useState<StreamEndpointsRes[]>([]);
+  const [streamEndpoints, setStreamEndpoints] = useState<StreamEndpointsRes[]>(
+    []
+  );
   const [selectedEndpointId, setSelectedEndpointId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -114,19 +123,21 @@ function SampleStreamButtonPluginItem({
   };
 
   useEffect(() => {
-    pluginApi.setActionButtonDropdownItems([
-      new ActionButtonDropdownSeparator(),
-      new ActionButtonDropdownOption({
-        label: "Start Stream",
-        icon: "play",
-        tooltip: "Start Stream",
-        allowed: true,
-        onClick: () => {
-          handleStartStreamButtonClick();
-        },
-      }),
-    ]);
-  }, []);
+    if (currentUser?.presenter) {
+      pluginApi.setActionButtonDropdownItems([
+        new ActionButtonDropdownSeparator(),
+        new ActionButtonDropdownOption({
+          label: "Start Stream",
+          icon: "play",
+          tooltip: "Start Stream",
+          allowed: true,
+          onClick: () => {
+            handleStartStreamButtonClick();
+          },
+        }),
+      ]);
+    }
+  }, [currentUser]);
 
   const loadedChatMessages = pluginApi.useLoadedChatMessages();
 
@@ -292,7 +303,7 @@ function SampleStreamButtonPluginItem({
                 required
               >
                 <option value="">Select a destination</option>
-                {streamEndpoints.map(endpoint => (
+                {streamEndpoints.map((endpoint) => (
                   <option key={endpoint.id} value={endpoint.id}>
                     {endpoint.title}
                   </option>
