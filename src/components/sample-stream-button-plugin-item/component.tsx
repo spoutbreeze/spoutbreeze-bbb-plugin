@@ -18,9 +18,9 @@ import {
   fetchStreamEndpoints,
   StreamEndpointsRes,
 } from "./../../api/streamEndpoints";
+import { fetchMeetingDetails, MeetingDetailsRes } from "./../../api/meetingDetails";
 import "./style.css";
 
-// Parse a single message in the format `:username!username@username.tmi.twitch.tv PRIVMSG #channel :message`
 const parseTwitchMessage = (msg: string) => {
   try {
     if (!msg.includes("PRIVMSG")) return null;
@@ -45,13 +45,11 @@ function SampleStreamButtonPluginItem({
   BbbPluginSdk.initialize(uuid);
   const pluginApi: PluginApi = BbbPluginSdk.getPluginApi(uuid);
   const { data: currentUser } = pluginApi.useCurrentUser();
+  const { data: meetingInfo } = pluginApi.useMeeting();
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [meetingId, setMeetingId] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsRes | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
-  const [streamEndpoints, setStreamEndpoints] = useState<StreamEndpointsRes[]>(
-    []
-  );
+  const [streamEndpoints, setStreamEndpoints] = useState<StreamEndpointsRes[]>([]);
   const [selectedEndpointId, setSelectedEndpointId] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -67,7 +65,7 @@ function SampleStreamButtonPluginItem({
 
   const handleStartStreamButtonClick = () => {
     setShowModal(true);
-    loadStreamEndpoints();
+    loadStreamData();
     pluginLogger.info("Start Stream button clicked");
   };
 
@@ -75,28 +73,57 @@ function SampleStreamButtonPluginItem({
     setShowModal(false);
   };
 
-  const loadStreamEndpoints = async () => {
+  const loadStreamData = async () => {
     setIsLoading(true);
     try {
-      const endpoints = await fetchStreamEndpoints();
-      setStreamEndpoints(endpoints);
-      if (endpoints.length > 0) {
-        setSelectedEndpointId(endpoints[0].id);
+      // Get the internal meeting ID from BBB
+      const internalMeetingId = Array.isArray(meetingInfo) 
+        ? meetingInfo[0]?.meetingId 
+        : (meetingInfo as any)?.meetingId;
+
+
+      if (!internalMeetingId) {
+        throw new Error("Meeting ID not available");
       }
+
+      console.log("Loading data for meeting:", internalMeetingId);
+
+      // Fetch both meeting details and stream endpoints concurrently
+      const [meetingDetailsResponse, endpointsResponse] = await Promise.all([
+        fetchMeetingDetails(internalMeetingId),
+        fetchStreamEndpoints()
+      ]);
+
+      setMeetingDetails(meetingDetailsResponse);
+      setStreamEndpoints(endpointsResponse);
+      
+      if (endpointsResponse.length > 0) {
+        setSelectedEndpointId(endpointsResponse[0].id);
+      }
+
+      setStatusMessage("Stream data loaded successfully");
       setIsLoading(false);
     } catch (error) {
-      setStatusMessage("Error loading stream endpoints");
-      pluginLogger.error("Error loading stream endpoints:", error);
-      console.error("Error loading stream endpoints:", error);
+      setStatusMessage(`Error loading stream data: ${error.message}`);
+      pluginLogger.error("Error loading stream data:", error);
+      console.error("Error loading stream data:", error);
+      setIsLoading(false);
     }
   };
 
   const handleFormSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    
     if (!selectedEndpointId) {
       setStatusMessage("Please select a stream endpoint");
       return;
     }
+
+    if (!meetingDetails) {
+      setStatusMessage("Meeting details not loaded");
+      return;
+    }
+
     const selectedEndpoint = streamEndpoints.find(
       (endpoint) => endpoint.id === selectedEndpointId
     );
@@ -108,11 +135,13 @@ function SampleStreamButtonPluginItem({
 
     try {
       const payload = {
-        meeting_id: meetingId,
+        meeting_id: meetingDetails.meeting_id,
         rtmp_url: selectedEndpoint.rtmp_url,
         stream_key: selectedEndpoint.stream_key,
-        password: password,
+        password: meetingDetails.moderator_pw,
       };
+      
+      console.log("Starting stream with payload:", payload);
       await startStream(payload);
       setStatusMessage("Stream started successfully");
       pluginLogger.info("Stream started successfully");
@@ -283,18 +312,9 @@ function SampleStreamButtonPluginItem({
       <div>
         <h2>Start Stream</h2>
         {isLoading ? (
-          <p>Loading stream destinations...</p>
+          <p>Loading stream data...</p>
         ) : (
           <form onSubmit={handleFormSubmit}>
-            <div>
-              <label>Meeting ID:</label>
-              <input
-                type="text"
-                value={meetingId}
-                onChange={(e) => setMeetingId(e.target.value)}
-                required
-              />
-            </div>
             <div>
               <label>Stream Destination:</label>
               <select
@@ -310,16 +330,9 @@ function SampleStreamButtonPluginItem({
                 ))}
               </select>
             </div>
-            <div>
-              <label>Password:</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit">Start Stream</button>
+            <button type="submit" disabled={!meetingDetails || !selectedEndpointId}>
+              Start Stream
+            </button>
           </form>
         )}
         {statusMessage && <p>{statusMessage}</p>}
