@@ -22,8 +22,8 @@ function SampleStreamButtonPluginItem({
   const { data: currentUser } = pluginApi.useCurrentUser();
   const { data: meetingInfo } = pluginApi.useMeeting();
   const [showModal, setShowModal] = useState<boolean>(false);
-
-  const { messages, sendMessage } = useTwitchChat("ws://localhost:8000/ws/chat/");
+  const WEBSOCKET_URL = process.env.WEBSOCKET_URL;
+  const { messages, sendMessage } = useTwitchChat(`${WEBSOCKET_URL}/ws/chat/`);
 
   const {
     meetingDetails,

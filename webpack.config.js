@@ -58,7 +58,7 @@ module.exports = {
   plugins: [
     new Dotenv({
       path: './.env', // Path to .env file
-      safe: false, // Set to true if you have a .env.example file
+      safe: true, // Set to true if you have a .env.example file
       systemvars: true, // Load system environment variables as well
     }),
     new CopyWebpackPlugin({

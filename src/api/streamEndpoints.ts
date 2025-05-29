@@ -16,7 +16,7 @@ export const fetchStreamEndpoints = async (): Promise<StreamEndpointsRes[]> => {
   try {
     // Call the proxy endpoint to get all available stream endpoints
     const response = await axios.get<StreamEndpointsRes[]>(
-      `https://b04a-2c0f-4280-10-1083-fa2d-9f09-a5cb-eb83.ngrok-free.app/api/bbb/proxy/stream-endpoints`,
+      `${API_URL}/api/bbb/proxy/stream-endpoints`,
       {
         headers: {
           'ngrok-skip-browser-warning': 'true',
