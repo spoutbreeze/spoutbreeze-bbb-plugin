@@ -25,7 +25,7 @@ const API_URL = process.env.API_URL;
 export const fetchMeetingDetails = async (internalMeetingId: string): Promise<MeetingDetailsRes> => {
   try {
     const response = await axios.get<MeetingDetailsRes>(
-      `${API_URL}/api/bbb/meeting/${internalMeetingId}`,
+      `https://b04a-2c0f-4280-10-1083-fa2d-9f09-a5cb-eb83.ngrok-free.app/api/bbb/meeting/${internalMeetingId}`,
       {
         headers: {
           'ngrok-skip-browser-warning': 'true',
