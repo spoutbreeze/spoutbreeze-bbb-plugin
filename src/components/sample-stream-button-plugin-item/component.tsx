@@ -34,7 +34,7 @@ function SampleStreamButtonPluginItem({
     setSelectedEndpointId,
     loadStreamData,
     handleStreamStart,
-  } = useStreamManager();
+  } = useStreamManager(pluginApi); // ✅ Pass pluginApi here
 
   useChatProcessor(pluginApi, messages, sendMessage);
 

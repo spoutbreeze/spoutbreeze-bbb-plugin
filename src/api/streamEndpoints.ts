@@ -1,4 +1,4 @@
-import axios from "axios";
+//import axios from "axios";
 
 export interface StreamEndpointsRes {
   id: string;
@@ -10,29 +10,54 @@ export interface StreamEndpointsRes {
   user_id?: string;
 }
 
-const API_URL = process.env.API_URL;
-
-export const fetchStreamEndpoints = async (): Promise<StreamEndpointsRes[]> => {
+export const fetchStreamEndpoints = async (pluginApi: any): Promise<StreamEndpointsRes[]> => {
   try {
-    // Call the proxy endpoint to get all available stream endpoints
-    const response = await axios.get<StreamEndpointsRes[]>(
-      `${API_URL}/api/bbb/proxy/stream-endpoints`,
-      {
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-          'Content-Type': 'application/json'
+    console.log("Fetching cached stream endpoints...");
+    
+    const response = await pluginApi.getRemoteData('streamEndpoints');
+    console.log("Response from getRemoteData:", response);
+    console.log("Response status:", response.status);
+    console.log("Response headers:", response.headers);
+    
+    if (response.ok) {
+      try {
+        // Clone the response before reading to avoid body consumption issues
+        const responseClone = response.clone();
+        const data = await responseClone.json();
+        console.log("Stream endpoints fetched successfully:", data);
+        
+        // Since your backend returns a direct array, handle it
+        if (Array.isArray(data)) {
+          return data;
+        } else if (data.stream_endpoints && Array.isArray(data.stream_endpoints)) {
+          return data.stream_endpoints;
+        } else {
+          console.warn("Unexpected data format:", data);
+          return [];
         }
+      } catch (jsonError) {
+        console.error("Error parsing JSON:", jsonError);
+        // Try to get the response as text to see what we're actually getting
+        try {
+          const textResponse = response.clone();
+          const text = await textResponse.text();
+          console.log("Response as text:", text);
+          console.log("Response content-type:", response.headers.get('content-type'));
+        } catch (textError) {
+          console.error("Could not read response as text either:", textError);
+        }
+        throw new Error(`Failed to parse JSON response: ${jsonError.message}`);
       }
-    );
-
-    if (response.status === 200) {
-      console.log("Stream endpoints fetched successfully:", response.data);
-      return response.data;
     } else {
-      console.error("Failed to fetch stream endpoints:", response.statusText);
-      throw new Error(
-        `Failed to fetch stream endpoints: ${response.statusText}`
-      );
+      console.error("Failed to fetch stream endpoints:", response.status, response.statusText);
+      // Try to read the error response
+      try {
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
+      } catch (e) {
+        console.error("Could not read error response:", e);
+      }
+      throw new Error(`Failed to fetch stream endpoints: ${response.statusText}`);
     }
   } catch (error) {
     console.error("Error fetching stream endpoints:", error);

@@ -2,5 +2,17 @@
   "requiredSdkVersion": "~0.0.73",
   "name": "SampleStreamButtonPlugin",
   "javascriptEntrypointUrl": "SampleStreamButtonPlugin.js",
-  "localesBaseUrl": "https://cdn.dominio.com/pluginabc/"
+  "localesBaseUrl": "https://cdn.dominio.com/pluginabc/",
+  "remoteDataSources": [
+    {
+      "name": "streamEndpoints",
+      "url": "${meta_streamEndpointsUrl}",
+      "fetchMode": "onDemand",
+      "permissions": ["moderator", "viewer"],
+      "headers": {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      }
+    }
+  ]
 }

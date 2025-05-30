@@ -2,9 +2,9 @@ import { useState } from "react";
 import { fetchStreamEndpoints, StreamEndpointsRes } from "../api/streamEndpoints";
 import { fetchMeetingDetails, MeetingDetailsRes } from "../api/meetingDetails";
 import { startStream } from "../api/startStream";
-import { pluginLogger } from "bigbluebutton-html-plugin-sdk";
+import { pluginLogger, PluginApi } from "bigbluebutton-html-plugin-sdk";
 
-export const useStreamManager = () => {
+export const useStreamManager = (pluginApi: PluginApi) => {
   const [meetingDetails, setMeetingDetails] = useState<MeetingDetailsRes | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [streamEndpoints, setStreamEndpoints] = useState<StreamEndpointsRes[]>([]);
@@ -23,7 +23,7 @@ export const useStreamManager = () => {
       // Fetch both meeting details and stream endpoints concurrently
       const [meetingDetailsResponse, endpointsResponse] = await Promise.all([
         fetchMeetingDetails(internalMeetingId),
-        fetchStreamEndpoints()
+        fetchStreamEndpoints(pluginApi) // ✅ Now passing pluginApi
       ]);
 
       setMeetingDetails(meetingDetailsResponse);
