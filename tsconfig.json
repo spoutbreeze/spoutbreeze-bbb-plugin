@@ -8,7 +8,7 @@
         "allowJs": true,
         "moduleResolution": "node"
     },
-    "include": ["src/*"],
+    "include": ["src/**/*"],
     "paths": {
         "*": ["node_modules"]
     },
